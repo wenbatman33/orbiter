@@ -7,7 +7,7 @@ import { saveOverrides, clearOverrides } from './overrides.js';
 const LABELS = {
   ui: '🔠 UI 縮放基準', refW: '基準寬 px', refH: '基準高 px', min: '最小縮放', max: '最大縮放',
   camera: '📷 相機', earth: '🌍 地球', ship: '🚀 太空船', sun: '☀️ 太陽', moon: '🌙 月球', space: '🌌 太空', fx: '✨ 後製特效', hud: '🖥 HUD',
-  stats: '數值列 stats', energy: '能量條 energy', controls: '按鈕 controls', hint: '提示 hint', banner: '橫幅 banner', title: '標題畫面 title', gameover: '結算畫面 gameover', comms: '通訊字幕 comms',
+  stats: '數值列 stats', energy: '能量條 energy', controls: '按鈕 controls', hint: '提示 hint', banner: '橫幅 banner', title: '標題畫面 title', gameover: '結算畫面 gameover', comms: '通訊字幕 comms', board: '排行榜 board',
   fov: '視角 FOV', lookX: '注視點 X', lookY: '注視點 Y', follow: '跟隨太空船比例',
   radius: '半徑', cloudAlt: '雲層高度', atmoScale: '大氣層厚度', atmoIntensity: '大氣光暈強度', hazeIntensity: '地表薄霧強度',
   altMin: '最低高度', altMax: '最高高度', rangeX: '左右活動範圍', scale: '縮放', tilt: '傾斜幅度', touchOffsetY: '觸控上移 px', titleX: '標題畫面 X', titleAlt: '標題畫面高度', landX: '迫降著陸點 X',
@@ -148,7 +148,7 @@ export function createDevTools(api) {
     '▶ 開始巡航模式': T.cruise, '▶ 開始戰鬥模式': T.combat, '🏠 回標題畫面': T.title,
     '⬆ 升級（LEVEL UP）': T.levelUp, '🌍 完成一圈': T.lap, '💥 受擊': T.hit, '🛡 啟動護盾': T.shield,
     '💎 生成能量晶體串': T.cells, '🪨 生成隕石群': T.asteroids, '🛰 生成太空垃圾': T.debris, '☄️ 生成流星（含預警）': T.meteor, '🟢 生成護盾道具': T.shieldItem,
-    '🔋 能量全滿': T.fillEnergy, '🪫 能量剩 15%': T.lowEnergy, '🪂 緊急迫降': T.landing, '🏁 直接結算畫面': T.gameOver,
+    '🔋 能量全滿': T.fillEnergy, '🪫 能量剩 15%': T.lowEnergy, '🪂 緊急迫降': T.landing, '🏁 直接結算畫面': T.gameOver, '🏆 開啟排行榜': T.board,
   };
   for (const name of Object.keys(trig)) fTrig.add(trig, name);
   fTrig.close();

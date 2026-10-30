@@ -14,6 +14,7 @@ export class Hud {
       title: $('screen-title'),
       gameover: $('screen-over'),
       comms: $('hud-comms'),
+      board: $('screen-board'),
     };
     this.cache = {};
     this.timers = {};

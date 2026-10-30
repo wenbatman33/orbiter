@@ -14,6 +14,7 @@ import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
 import { Comms, COMMS_LINE_IDS } from './comms.js';
 import { buildDescentCurve, descentAt } from './descent.js';
+import { Leaderboard } from './leaderboard.js';
 
 const hasOverrides = loadOverrides({ LAYOUTS, GAME, THEME });
 if (hasOverrides) console.info('[ORBITER] 已套用 DEV 本機暫存數值（DEV 面板可清除）');
@@ -46,6 +47,7 @@ const entities = new Entities(scene, particles, THEME);
 const hud = new Hud();
 const sfx = new Sfx();
 const comms = new Comms(sfx, hud);
+const board = new Leaderboard();
 
 // ── 狀態 ───────────────────────────────────────────
 const S = {
@@ -259,6 +261,8 @@ function startGame(mode) {
   sfx.start();
   comms.preload();
   resetRun(mode);
+  board.close();
+  board.startRun(mode);
   comms.schedule(1.4, mode === 'combat' ? 'combat' : 'start');
   S.phase = 'playing';
   S.paused = false;
@@ -278,6 +282,7 @@ function toTitle() {
   S.phase = 'title';
   S.paused = false;
   entities.clear();
+  board.close();
   comms.reset();
   sfx.stopRoar();
   ship.setChute(false);
@@ -385,6 +390,7 @@ function finishLanding() {
   }
   hud.showHud(false);
   hud.showGameOver({ km, laps: S.travel / TAU, kills: S.kills, best: S.best[S.mode], isBest, mode: S.mode, ocean: S.land.ocean });
+  board.offerSubmit({ km, kills: S.kills });
 }
 
 function togglePause() {
@@ -789,6 +795,7 @@ const devApi = {
       touchdown(groundBelowShip());
       finishLanding();
     },
+    board: () => board.open(),
     commsPlay: (id) => {
       sfx.unlock();
       comms.stop();

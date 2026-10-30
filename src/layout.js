@@ -22,6 +22,7 @@ export const LAYOUTS = {
       title: { x: 50, y: 40, ax: 0.5, ay: 0.5, scale: 1, fontSize: 16, color: '#ffffff', opacity: 1 },
       gameover: { x: 50, y: 42, ax: 0.5, ay: 0.5, scale: 1, fontSize: 16, color: '#ffffff', opacity: 1 },
       comms: { x: 3, y: 94, ax: 0, ay: 1, scale: 1, fontSize: 15, color: '#eaf6ff', opacity: 1 },
+      board: { x: 50, y: 48, ax: 0.5, ay: 0.5, scale: 1, fontSize: 15, color: '#eaf6ff', opacity: 1 },
     },
   },
   tablet: {
@@ -42,6 +43,7 @@ export const LAYOUTS = {
       title: { x: 50, y: 36, ax: 0.5, ay: 0.5, scale: 1, fontSize: 15, color: '#ffffff', opacity: 1 },
       gameover: { x: 50, y: 38, ax: 0.5, ay: 0.5, scale: 1, fontSize: 15, color: '#ffffff', opacity: 1 },
       comms: { x: 4, y: 96, ax: 0, ay: 1, scale: 1, fontSize: 15, color: '#eaf6ff', opacity: 1 },
+      board: { x: 50, y: 44, ax: 0.5, ay: 0.5, scale: 1, fontSize: 15, color: '#eaf6ff', opacity: 1 },
     },
   },
   mobile: {
@@ -62,6 +64,7 @@ export const LAYOUTS = {
       title: { x: 50, y: 34, ax: 0.5, ay: 0.5, scale: 1, fontSize: 12, color: '#ffffff', opacity: 1 },
       gameover: { x: 50, y: 36, ax: 0.5, ay: 0.5, scale: 1, fontSize: 12, color: '#ffffff', opacity: 1 },
       comms: { x: 50, y: 96, ax: 0.5, ay: 1, scale: 1, fontSize: 13, color: '#eaf6ff', opacity: 1 },
+      board: { x: 50, y: 42, ax: 0.5, ay: 0.5, scale: 1, fontSize: 13, color: '#eaf6ff', opacity: 1 },
     },
   },
 };

@@ -108,6 +108,7 @@
           <span class="mode-best" id="best-combat"></span>
         </button>
       </div>
+      <button class="link-btn" id="btn-board">🏆 排行榜</button>
       <div class="title-help">滑鼠 / 手指 / 方向鍵 控制太空船 · 戰鬥模式按住滑鼠或空白鍵射擊 · P 暫停</div>
       <div class="title-copy">© 2026 WEN CHAO CHIN. All rights reserved.</div>
     </div>
@@ -122,10 +123,30 @@
         <div class="over-stat" id="over-kills-wrap"><div class="v" id="over-kills">0</div><div class="l">擊落</div></div>
         <div class="over-stat"><div class="v" id="over-best">0</div><div class="l">最佳紀錄 KM</div></div>
       </div>
+      <form class="score-form hidden" id="score-form">
+        <input id="score-name" maxlength="12" placeholder="輸入你的名字" autocomplete="nickname" enterkeyhint="send" aria-label="排行榜名字">
+        <button class="btn primary" id="score-submit" type="submit">上傳成績</button>
+      </form>
+      <div class="score-status" id="score-status"></div>
       <div class="over-buttons">
         <button class="btn primary" id="btn-retry">再飛一次</button>
+        <button class="btn" id="btn-board-over">排行榜</button>
         <button class="btn" id="btn-menu">回主選單</button>
       </div>
+    </div>
+
+    <!-- 排行榜 -->
+    <div class="hud-el hidden" id="screen-board" data-key="board">
+      <div class="board-head">
+        <span>LEADERBOARD 排行榜</span>
+        <button id="board-close" aria-label="關閉排行榜">✕</button>
+      </div>
+      <div class="board-tabs">
+        <button class="board-tab on" data-mode="cruise">巡航模式</button>
+        <button class="board-tab" data-mode="combat">戰鬥模式</button>
+      </div>
+      <ol id="board-list"></ol>
+      <div id="board-status"></div>
     </div>
 
     <div class="screen-full hidden" id="screen-pause">

@@ -17,6 +17,17 @@ node server.mjs
 Cloudflare 後台連結此 repo，組建命令留空、部署命令 `npx wrangler deploy`。
 設定在 `wrangler.jsonc`（根目錄當靜態網站上傳），`.assetsignore` 列出不公開的檔案。
 
+## 排行榜（Cloudflare D1）
+
+成績存在 D1 資料庫 `orbiter-leaderboard`，API 在 `worker/index.js`。本機 `node server.mjs` 沒有 API，排行榜會顯示暫時無法使用；要測試請用本機資料庫：
+
+```bash
+npx wrangler d1 execute orbiter-leaderboard --local --file=./schema.sql
+npx wrangler dev --port 8799
+```
+
+本機需要 `.dev.vars`（內容 `RUN_SECRET=任意字串`，不進 git）；正式環境用 `npx wrangler secret put RUN_SECRET` 設定。伺服器的速度上限 `MAX_KM_PER_SEC` 要和 `GAME.speedMax` 一致。
+
 ## 玩法
 
 - **巡航模式**：閃避障礙、收集能量
@@ -48,6 +59,8 @@ Cloudflare 後台連結此 repo，組建命令留空、部署命令 `npx wrangle
 | `src/entities.js` | 能量晶體、隕石、太空垃圾、流星、護盾、雷射 |
 | `src/particles.js` | 粒子系統 |
 | `src/hud.js` | HUD 與畫面 |
+| `src/leaderboard.js` | 排行榜畫面與上傳成績 |
+| `worker/index.js`、`schema.sql` | 排行榜 API 與資料表 |
 | `src/audio.js` | 合成音效與無線電效果 |
 | `src/comms.js` | 地面通訊（事件、優先順序、排隊） |
 | `src/commsLines.js` | 通訊台詞與中文字幕 |

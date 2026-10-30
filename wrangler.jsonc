@@ -1,9 +1,19 @@
 {
-  // Cloudflare Workers 靜態網站設定：專案根目錄直接當靜態檔上傳，不需建置
-  // name 必須和 Cloudflare 後台的 Worker 名稱一致
-  "name": "orbiter",
-  "compatibility_date": "2025-09-01",
-  "assets": {
-    "directory": "."
-  }
+	// Cloudflare Workers 設定：靜態檔案直接服務，只有 /api/* 走排行榜程式
+	// name 必須和 Cloudflare 後台的 Worker 名稱一致
+	"name": "orbiter",
+	"compatibility_date": "2025-09-01",
+	"main": "worker/index.js",
+	"assets": {
+		"directory": ".",
+		"binding": "ASSETS",
+		"run_worker_first": ["/api/*"]
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "orbiter-leaderboard",
+			"database_id": "c8d0f025-a811-40be-8c1c-f996f1035fde"
+		}
+	]
 }

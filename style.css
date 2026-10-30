@@ -248,6 +248,19 @@ html, body {
 .mode-name { font-size: 1.15em; font-weight: 700; letter-spacing: 0.2em; }
 .mode-desc { font-size: 0.75em; opacity: 0.7; letter-spacing: 0.1em; }
 .mode-best { font-family: var(--font-num); font-size: 0.7em; color: var(--accent); min-height: 1em; }
+.link-btn {
+  pointer-events: auto;
+  margin-top: 1.4em;
+  padding: 0.4em 1em;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  opacity: 0.85;
+}
+.link-btn:hover { color: var(--accent); opacity: 1; }
 .title-help { width: 26em; margin: 2em auto 0; font-size: 0.75em; line-height: 1.7; opacity: 0.6; letter-spacing: 0.1em; white-space: normal; }
 
 .over-main { font-size: min(3.4em, calc(10cqw / var(--ui, 1))); margin: 0.25em 0 0.7em; letter-spacing: 0.12em; font-weight: 800; }
@@ -270,6 +283,65 @@ html, body {
 }
 .btn.primary { border-color: var(--accent); box-shadow: 0 0 18px rgba(79, 243, 255, 0.25) inset; }
 .btn:hover { background: rgba(20, 60, 90, 0.55); }
+
+/* ── 上傳成績 ── */
+.score-form { display: flex; gap: 0.6em; justify-content: center; margin-top: 1.6em; }
+.score-form input {
+  pointer-events: auto;
+  width: 12em;
+  padding: 0.7em 0.9em;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0.4em;
+  background: rgba(6, 14, 36, 0.6);
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0.06em;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.score-form input:focus { outline: none; border-color: var(--accent); }
+.score-form .btn { padding: 0.7em 1.2em; }
+.score-form .btn:disabled { opacity: 0.5; cursor: default; }
+.score-status { min-height: 1.4em; margin-top: 0.8em; font-size: 0.82em; letter-spacing: 0.08em; color: var(--accent); white-space: normal; }
+
+/* ── 排行榜 ── */
+.board-open .screen { visibility: hidden; }
+#screen-board {
+  width: 24em;
+  padding: 1.1em 1.2em 1.2em;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0.6em;
+  background: rgba(4, 10, 28, 0.88);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  white-space: normal;
+}
+.board-head { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-num); font-size: 0.82em; letter-spacing: 0.14em; color: var(--accent); }
+#board-close { width: 2em; height: 2em; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.board-tabs { display: flex; gap: 0.5em; margin-top: 0.8em; }
+.board-tab {
+  flex: 1;
+  padding: 0.55em 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.3em;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.86em;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  opacity: 0.65;
+}
+.board-tab.on { border-color: var(--accent); opacity: 1; }
+#board-list { list-style: none; margin: 0.8em 0 0; padding: 0; }
+#board-list li { display: flex; align-items: baseline; gap: 0.7em; padding: 0.42em 0.4em; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+#board-list li.top .b-rank { color: var(--accent); }
+#board-list li.me { border-radius: 0.3em; background: rgba(79, 243, 255, 0.14); }
+.b-rank { width: 1.8em; font-family: var(--font-num); font-weight: 700; text-align: right; }
+.b-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.b-km { font-family: var(--font-num); font-size: 0.88em; }
+#board-status { padding: 0.6em 0 0.2em; text-align: center; font-size: 0.86em; opacity: 0.75; }
+#board-status:empty { display: none; }
 
 .screen-full {
   position: absolute;

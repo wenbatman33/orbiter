@@ -12,3 +12,6 @@ README.md
 src/layout.backup.js
 scripts
 assets/icons/icon-source.png
+worker
+schema.sql
+.dev.vars
