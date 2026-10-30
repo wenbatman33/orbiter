@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>ORBITER · 地球軌道巡航</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+        "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.2/dist/lil-gui.esm.min.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <canvas id="scene"></canvas>
+    <div id="flash"></div>
+
+    <!-- 遊戲中 HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-el" id="hud-stats" data-key="stats">
+        <div class="stat"><span class="stat-val" id="distance">0</span><span class="stat-label">KM 航程</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat"><span class="stat-val" id="laps">0.00</span><span class="stat-label">ORBIT 圈數</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat"><span class="stat-val" id="level">01</span><span class="stat-label">LEVEL 等級</span></div>
+        <div class="stat-sep combat-only"></div>
+        <div class="stat combat-only"><span class="stat-val" id="kills">0</span><span class="stat-label">擊落</span></div>
+      </div>
+      <div class="hud-el" id="hud-energy" data-key="energy">
+        <div class="energy-label"><span>ENERGY 能量</span><span id="energy-num">100</span></div>
+        <div class="energy-bar"><div class="energy-fill" id="energy-fill"></div></div>
+        <div class="shield-timer" id="shield-timer"></div>
+      </div>
+    </div>
+
+    <div class="hud-el" id="hud-controls" data-key="controls">
+      <button id="btn-pause" class="hidden" aria-label="暫停">❚❚</button>
+      <button id="btn-sound" aria-label="音效開關">♪</button>
+    </div>
+
+    <div class="hud-el" id="hud-hint" data-key="hint"><div class="fade hint-inner"></div></div>
+
+    <div class="hud-el" id="hud-banner" data-key="banner">
+      <div class="fade banner-inner">
+        <div class="banner-sub" id="banner-sub">LEVEL UP</div>
+        <div class="banner-main" id="banner-main">等級 02</div>
+      </div>
+    </div>
+
+    <!-- 標題畫面 -->
+    <div class="screen hud-el" id="screen-title" data-key="title">
+      <div class="title-kicker">LOW EARTH ORBIT</div>
+      <h1 class="title-main">ORBITER</h1>
+      <div class="title-sub">地球軌道巡航</div>
+      <div class="mode-buttons">
+        <button class="mode-btn" data-mode="cruise">
+          <span class="mode-name">巡航模式</span>
+          <span class="mode-desc">閃避障礙 · 收集能量</span>
+          <span class="mode-best" id="best-cruise"></span>
+        </button>
+        <button class="mode-btn" data-mode="combat">
+          <span class="mode-name">戰鬥模式</span>
+          <span class="mode-desc">雷射開火 · 擊碎隕石</span>
+          <span class="mode-best" id="best-combat"></span>
+        </button>
+      </div>
+      <div class="title-help">滑鼠 / 手指 / 方向鍵 控制太空船 · 戰鬥模式按住滑鼠或空白鍵射擊 · P 暫停</div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div class="screen hud-el hidden" id="screen-over" data-key="gameover">
+      <div class="over-kicker" id="over-kicker">SIGNAL LOST · 訊號中斷</div>
+      <h2 class="over-main" id="over-main">墜入大氣層</h2>
+      <div class="over-stats">
+        <div class="over-stat"><div class="v" id="over-km">0</div><div class="l">KM 航程</div></div>
+        <div class="over-stat"><div class="v" id="over-laps">0.00</div><div class="l">繞行圈數</div></div>
+        <div class="over-stat" id="over-kills-wrap"><div class="v" id="over-kills">0</div><div class="l">擊落</div></div>
+        <div class="over-stat"><div class="v" id="over-best">0</div><div class="l">最佳紀錄 KM</div></div>
+      </div>
+      <div class="over-buttons">
+        <button class="btn primary" id="btn-retry">再飛一次</button>
+        <button class="btn" id="btn-menu">回主選單</button>
+      </div>
+    </div>
+
+    <div class="screen-full hidden" id="screen-pause">
+      <div class="pause-title">已暫停</div>
+      <div class="pause-sub">點擊任意處繼續</div>
+    </div>
+
+    <button id="dev-gear" class="hidden" title="DEV 微調工具（D）">⚙</button>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
