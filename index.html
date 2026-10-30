@@ -4,6 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>ORBITER · 地球軌道巡航</title>
+  <meta name="description" content="駕駛太空船繞行地球，收集能量、閃避隕石。能量耗盡時，由休士頓引導你迫降回家。">
+  <!-- 社群分享預覽（Threads、Facebook、LINE、X）；圖片必須用完整網址 -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ORBITER">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:url" content="https://orbiter.wenbatman33.workers.dev/">
+  <meta property="og:title" content="ORBITER · 地球軌道巡航">
+  <meta property="og:description" content="駕駛太空船繞行地球，收集能量、閃避隕石。能量耗盡時，由休士頓引導你迫降回家。">
+  <meta property="og:image" content="https://orbiter.wenbatman33.workers.dev/assets/og-image.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="太空船飛越低多邊形地球，四周有能量晶體與隕石，上方是 ORBITER 標題">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ORBITER · 地球軌道巡航">
+  <meta name="twitter:description" content="駕駛太空船繞行地球，收集能量、閃避隕石。能量耗盡時，由休士頓引導你迫降回家。">
+  <meta name="twitter:image" content="https://orbiter.wenbatman33.workers.dev/assets/og-image.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -21,6 +38,7 @@
 <body>
   <div id="app">
     <canvas id="scene"></canvas>
+    <div id="boot">載入中</div>
     <div id="flash"></div>
 
     <!-- 遊戲中 HUD -->
@@ -108,6 +126,6 @@
 
     <button id="dev-gear" class="hidden" title="DEV 微調工具（D）">⚙</button>
   </div>
-  <script type="module" src="src/main.js"></script>
+  <script type="module" src="src/main.js" onerror="document.getElementById('boot').textContent = '載入失敗，請重新整理'"></script>
 </body>
 </html>

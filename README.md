@@ -52,6 +52,7 @@ Cloudflare 後台連結此 repo，組建命令留空、部署命令 `npx wrangle
 | `src/comms.js` | 地面通訊（事件、優先順序、排隊） |
 | `src/commsLines.js` | 通訊台詞與中文字幕 |
 | `assets/voice/` | 語音檔，由 `scripts/gen_voice.mjs` 產生 |
+| `assets/og-image.jpg` | 社群分享預覽圖（1200×630，遊戲實拍） |
 | `src/devtools.js` | DEV 微調工具 |
 | `server.mjs` | 本機開發伺服器 |
 

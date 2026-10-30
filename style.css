@@ -47,6 +47,24 @@ html, body {
 
 .hidden { display: none !important; }
 
+/* 介面位置由 JS 依裝置計算，定位完成前先藏起來，避免載入時擠在左上角 */
+#app:not(.ready) #hud,
+#app:not(.ready) .hud-el { visibility: hidden; }
+#app.ready .screen { animation: appear 0.6s ease-out; }
+#boot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  letter-spacing: 0.4em;
+  color: #9fb4cc;
+  pointer-events: none;
+  animation: blink 1.2s ease-in-out infinite;
+}
+#app.ready #boot { display: none; }
+
 #hud { position: absolute; inset: 0; pointer-events: none; }
 
 .hud-el {
@@ -268,6 +286,7 @@ html, body {
 .pause-sub { font-size: 13px; letter-spacing: 0.2em; opacity: 0.7; }
 
 @keyframes blink { 50% { opacity: 0.35; } }
+@keyframes appear { from { opacity: 0; } }
 
 /* ── DEV 微調工具 ── */
 #dev-gear {

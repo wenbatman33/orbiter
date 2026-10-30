@@ -123,6 +123,7 @@ function resize() {
   S.layoutKey = pickLayoutKey(w, h);
   L = LAYOUTS[S.layoutKey];
   applyLayout();
+  app.classList.add('ready'); // 版面定位完成才顯示介面
 }
 
 function applyLayout() {
