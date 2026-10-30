@@ -68,6 +68,11 @@ html, body {
   letter-spacing: 0.02em;
   text-shadow: 0 0 12px rgba(79, 243, 255, 0.35);
 }
+/* 等寬數字格：格寬取 Orbitron 最寬數字（0、8 約 0.834em），見 hud.js 的 _digits */
+.dg, .dp { display: inline-block; text-align: center; }
+.dg { width: 0.84em; }
+.dp { width: 0.3em; }
+#distance { min-width: 4.5em; } /* 預留 5 位數加逗號，位數增加時後面的數值不移動 */
 .stat-label { margin-top: 0.5em; font-size: 0.66em; letter-spacing: 0.16em; opacity: 0.7; }
 .stat-sep { width: 1px; height: 2.4em; background: currentColor; opacity: 0.25; }
 .combat-only { display: none !important; }
@@ -105,7 +110,7 @@ html, body {
   box-shadow: 0 0 14px var(--warn);
   animation: blink 0.5s steps(2) infinite;
 }
-.shield-timer { margin-top: 0.5em; font-size: 0.75em; letter-spacing: 0.14em; color: #7dffb2; min-height: 1.2em; }
+.shield-timer { margin-top: 0.5em; font-size: 0.75em; letter-spacing: 0.14em; color: #7dffb2; min-height: 1.2em; font-variant-numeric: tabular-nums; }
 
 /* ── 控制按鈕 ── */
 #hud-controls { display: flex; gap: 0.6em; pointer-events: auto; }

@@ -46,11 +46,28 @@ export class Hud {
     $(id).textContent = value;
   }
 
+  // 數字逐字放進等寬格：Orbitron 的數字寬度不一（1 不到 0 的一半），直接寫字整排會跟著跳
+  _digits(id, value) {
+    if (this.cache[id] === value) return;
+    this.cache[id] = value;
+    const el = $(id);
+    if (!el.firstElementChild) el.textContent = '';
+    const chars = [...value];
+    while (el.children.length > chars.length) el.lastElementChild.remove();
+    while (el.children.length < chars.length) el.appendChild(document.createElement('span'));
+    chars.forEach((ch, i) => {
+      const cell = el.children[i];
+      if (cell.textContent === ch) return;
+      cell.textContent = ch;
+      cell.className = ch >= '0' && ch <= '9' ? 'dg' : 'dp';
+    });
+  }
+
   setStats({ km, laps, level, kills }) {
-    this._text('distance', Math.floor(km).toLocaleString('en-US'));
-    this._text('laps', laps.toFixed(2));
-    this._text('level', String(level).padStart(2, '0'));
-    this._text('kills', String(kills));
+    this._digits('distance', Math.floor(km).toLocaleString('en-US'));
+    this._digits('laps', laps.toFixed(2));
+    this._digits('level', String(level).padStart(2, '0'));
+    this._digits('kills', String(kills));
   }
 
   setEnergy(v, max) {
@@ -60,7 +77,7 @@ export class Hud {
       this.cache.energyW = w;
       $('energy-fill').style.width = w;
     }
-    this._text('energy-num', String(Math.ceil(pct * 100)));
+    this._digits('energy-num', String(Math.ceil(pct * 100)));
     this.els.energy.classList.toggle('energy-low', pct < 0.25);
   }
 

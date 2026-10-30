@@ -54,7 +54,7 @@ export const LAYOUTS = {
     hud: {
       stats: { x: 5, y: 3, ax: 0, ay: 0, scale: 1, fontSize: 12, color: '#eaf6ff', opacity: 1 },
       energy: { x: 5, y: 10, ax: 0, ay: 0, scale: 1, fontSize: 11, color: '#eaf6ff', opacity: 1 },
-      controls: { x: 95, y: 3, ax: 1, ay: 0, scale: 1, fontSize: 14, color: '#eaf6ff', opacity: 0.85 },
+      controls: { x: 95, y: 10, ax: 1, ay: 0, scale: 1, fontSize: 14, color: '#eaf6ff', opacity: 0.85 },
       hint: { x: 50, y: 22, ax: 0.5, ay: 0.5, scale: 1, fontSize: 14, color: '#eaf6ff', opacity: 1 },
       banner: { x: 50, y: 32, ax: 0.5, ay: 0.5, scale: 1, fontSize: 13, color: '#ffffff', opacity: 1 },
       title: { x: 50, y: 34, ax: 0.5, ay: 0.5, scale: 1, fontSize: 12, color: '#ffffff', opacity: 1 },
