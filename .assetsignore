@@ -10,3 +10,4 @@ server.mjs
 wrangler.jsonc
 README.md
 src/layout.backup.js
+scripts

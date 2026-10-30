@@ -8,7 +8,7 @@ export const LAYOUTS = {
     ui: { refW: 1280, refH: 800, min: 0.3, max: 1.6 },
     camera: { fov: 52, x: 0, y: 112, z: 270, lookX: 0, lookY: 100, follow: 0.12 },
     earth: { x: 0, y: -600, radius: 600, cloudAlt: 12, atmoScale: 1.12, atmoIntensity: 1.3, hazeIntensity: 0.9 },
-    ship: { x: -60, altMin: 35, altMax: 190, rangeX: 95, scale: 1, tilt: 1, touchOffsetY: 0, titleX: -130, titleAlt: 45 },
+    ship: { x: -60, altMin: 35, altMax: 190, rangeX: 95, scale: 1, tilt: 1, touchOffsetY: 0, titleX: -130, titleAlt: 45, landX: -10 },
     sun: { x: 1150, y: 720, z: -1900, size: 760, intensity: 2.4 },
     moon: { x: -760, y: 430, z: -1500, radius: 70 },
     space: { starSize: 1.8, starOpacity: 0.9, nebulaOpacity: 0.6, ambient: 0.55 },
@@ -21,13 +21,14 @@ export const LAYOUTS = {
       banner: { x: 50, y: 33, ax: 0.5, ay: 0.5, scale: 1, fontSize: 18, color: '#ffffff', opacity: 1 },
       title: { x: 50, y: 40, ax: 0.5, ay: 0.5, scale: 1, fontSize: 16, color: '#ffffff', opacity: 1 },
       gameover: { x: 50, y: 42, ax: 0.5, ay: 0.5, scale: 1, fontSize: 16, color: '#ffffff', opacity: 1 },
+      comms: { x: 3, y: 94, ax: 0, ay: 1, scale: 1, fontSize: 15, color: '#eaf6ff', opacity: 1 },
     },
   },
   tablet: {
     ui: { refW: 820, refH: 1180, min: 0.3, max: 1.6 },
     camera: { fov: 55, x: 0, y: 135, z: 420, lookX: 0, lookY: 125, follow: 0.12 },
     earth: { x: 0, y: -600, radius: 600, cloudAlt: 12, atmoScale: 1.12, atmoIntensity: 1.3, hazeIntensity: 0.9 },
-    ship: { x: -45, altMin: 35, altMax: 230, rangeX: 70, scale: 1.15, tilt: 1, touchOffsetY: 60, titleX: -60, titleAlt: 60 },
+    ship: { x: -45, altMin: 35, altMax: 230, rangeX: 70, scale: 1.15, tilt: 1, touchOffsetY: 60, titleX: -60, titleAlt: 60, landX: -10 },
     sun: { x: 900, y: 900, z: -1900, size: 760, intensity: 2.4 },
     moon: { x: -520, y: 600, z: -1500, radius: 70 },
     space: { starSize: 1.8, starOpacity: 0.9, nebulaOpacity: 0.6, ambient: 0.55 },
@@ -40,13 +41,14 @@ export const LAYOUTS = {
       banner: { x: 50, y: 30, ax: 0.5, ay: 0.5, scale: 1, fontSize: 17, color: '#ffffff', opacity: 1 },
       title: { x: 50, y: 36, ax: 0.5, ay: 0.5, scale: 1, fontSize: 15, color: '#ffffff', opacity: 1 },
       gameover: { x: 50, y: 38, ax: 0.5, ay: 0.5, scale: 1, fontSize: 15, color: '#ffffff', opacity: 1 },
+      comms: { x: 4, y: 96, ax: 0, ay: 1, scale: 1, fontSize: 15, color: '#eaf6ff', opacity: 1 },
     },
   },
   mobile: {
     ui: { refW: 390, refH: 844, min: 0.3, max: 1.6 },
     camera: { fov: 58, x: 0, y: 165, z: 560, lookX: 0, lookY: 150, follow: 0.1 },
     earth: { x: 0, y: -600, radius: 600, cloudAlt: 12, atmoScale: 1.12, atmoIntensity: 1.3, hazeIntensity: 0.9 },
-    ship: { x: -40, altMin: 40, altMax: 290, rangeX: 50, scale: 1.4, tilt: 1, touchOffsetY: 80, titleX: -30, titleAlt: 70 },
+    ship: { x: -40, altMin: 40, altMax: 290, rangeX: 50, scale: 1.4, tilt: 1, touchOffsetY: 80, titleX: -30, titleAlt: 70, landX: 0 },
     sun: { x: 700, y: 1100, z: -1900, size: 760, intensity: 2.4 },
     moon: { x: -380, y: 760, z: -1500, radius: 70 },
     space: { starSize: 1.6, starOpacity: 0.9, nebulaOpacity: 0.6, ambient: 0.55 },
@@ -59,6 +61,7 @@ export const LAYOUTS = {
       banner: { x: 50, y: 32, ax: 0.5, ay: 0.5, scale: 1, fontSize: 13, color: '#ffffff', opacity: 1 },
       title: { x: 50, y: 34, ax: 0.5, ay: 0.5, scale: 1, fontSize: 12, color: '#ffffff', opacity: 1 },
       gameover: { x: 50, y: 36, ax: 0.5, ay: 0.5, scale: 1, fontSize: 12, color: '#ffffff', opacity: 1 },
+      comms: { x: 50, y: 96, ax: 0.5, ay: 1, scale: 1, fontSize: 13, color: '#eaf6ff', opacity: 1 },
     },
   },
 };
@@ -76,8 +79,13 @@ export const GAME = {
   // 戰鬥模式
   fireRate: 0.13, bulletSpeed: 700, asteroidHp: 2, dropChance: 0.35,
   // 操控 / 動畫時間
-  shipFollow: 5, invulnTime: 1, bannerTime: 1.8, hintTime: 4.5, deathTime: 2.8,
+  shipFollow: 5, invulnTime: 1, bannerTime: 1.8, hintTime: 4.5,
   flashTime: 0.25, shake: 7, warnTime: 0.9,
+  // 緊急迫降（reentryAt / chuteAt 為佔 landingTime 的比例）
+  landingTime: 14, reentryAt: 0.42, chuteAt: 0.72, landedDelay: 1.8,
+  // 地面通訊
+  commsVolume: 0.03, commsGap: 0.4, commsRest: 6, commsIdleMin: 45, commsIdleMax: 80,
+  radioLow: 320, radioHigh: 2900, radioDrive: 4, radioNoise: 0.05, quindarVolume: 0.008,
 };
 
 export const THEME = {

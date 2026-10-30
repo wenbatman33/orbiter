@@ -298,6 +298,17 @@ export function createWorld(scene, theme) {
     scene.background = new THREE.Color(th.bgColor);
   };
 
+  // 查詢世界座標 x 正下方的地表：lift 為陸地隆起高度，ocean 為是否海面（迫降用）
+  W.surfaceAt = (x, L, th) => {
+    const R = L.earth.radius;
+    const dx = x - L.earth.x;
+    const dy = Math.sqrt(Math.max(0, R * R - dx * dx));
+    const c = Math.cos(-W.earth.rotation.z), s = Math.sin(-W.earth.rotation.z); // 換回地球模型座標
+    const vx = (dx * c - dy * s) / R, vy = (dx * s + dy * c) / R;
+    const e = fbm3(vx * 1.7 + 3.1, vy * 1.7 - 1.3, 7.7, 5, th.earthSeed);
+    return { lift: Math.max(0, e - th.seaLevel) * 0.09 * R, ocean: e < th.seaLevel };
+  };
+
   W.update = (dt, omega) => {
     W.earth.rotation.z += omega * dt;
     W.cloudGroup.rotation.z += omega * dt * 1.12; // 雲比地表快一點，增加層次

@@ -147,6 +147,30 @@ html, body {
   text-shadow: 0 0 24px rgba(79, 243, 255, 0.5);
 }
 
+/* ── 地面通訊字幕 ── */
+#hud-comms { width: 26em; white-space: normal; }
+.comms-inner {
+  padding: 0.7em 0.9em;
+  border-left: 2px solid var(--accent);
+  border-radius: 0 0.3em 0.3em 0;
+  background: rgba(4, 12, 30, 0.6);
+  backdrop-filter: blur(4px);
+}
+.comms-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--font-num);
+  font-size: 0.72em;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+.comms-inner.pilot { border-left-color: #ffb36b; }
+.comms-inner.pilot .comms-head { color: #ffb36b; }
+.comms-dot { width: 0.6em; height: 0.6em; border-radius: 50%; background: currentColor; animation: blink 0.6s steps(2) infinite; }
+.comms-zh { margin-top: 0.45em; line-height: 1.5; letter-spacing: 0.05em; }
+.comms-en { margin-top: 0.25em; font-size: 0.76em; line-height: 1.4; opacity: 0.6; }
+
 /* ── 流星預警 ── */
 .warn {
   position: absolute;
@@ -208,10 +232,9 @@ html, body {
 .mode-best { font-family: var(--font-num); font-size: 0.7em; color: var(--accent); min-height: 1em; }
 .title-help { width: 26em; margin: 2em auto 0; font-size: 0.75em; line-height: 1.7; opacity: 0.6; letter-spacing: 0.1em; white-space: normal; }
 
-.over-kicker { color: var(--warn); }
-.is-best .over-kicker { color: var(--accent); }
 .over-main { font-size: min(3.4em, calc(10cqw / var(--ui, 1))); margin: 0.25em 0 0.7em; letter-spacing: 0.12em; font-weight: 800; }
 .is-best .over-main { text-shadow: 0 0 26px var(--accent); }
+.title-copy { margin-top: 1.2em; font-size: 0.68em; letter-spacing: 0.08em; opacity: 0.45; }
 .over-stats { display: flex; justify-content: center; gap: 2em; }
 .over-stat .v { font-family: var(--font-num); font-size: 1.8em; font-weight: 700; }
 .over-stat .l { font-size: 0.7em; opacity: 0.7; letter-spacing: 0.16em; margin-top: 0.5em; }

@@ -13,6 +13,7 @@ export class Hud {
       banner: $('hud-banner'),
       title: $('screen-title'),
       gameover: $('screen-over'),
+      comms: $('hud-comms'),
     };
     this.cache = {};
     this.timers = {};
@@ -124,6 +125,23 @@ export class Hud {
     this._fade('banner', inner, dur);
   }
 
+  // 通訊字幕：ground 為 true 時是地面發話，false 為飛行員 / 系統
+  comms(who, zh, en, ground) {
+    clearTimeout(this.timers.comms);
+    const inner = this.els.comms.firstElementChild;
+    $('comms-who').textContent = who;
+    $('comms-zh').textContent = zh;
+    $('comms-en').textContent = en;
+    inner.classList.toggle('pilot', !ground);
+    inner.classList.add('show');
+  }
+
+  commsHide(delay) {
+    clearTimeout(this.timers.comms);
+    const inner = this.els.comms.firstElementChild;
+    this.timers.comms = setTimeout(() => inner.classList.remove('show'), delay * 1000);
+  }
+
   flash() {
     const el = $('flash');
     el.classList.add('on');
@@ -146,14 +164,15 @@ export class Hud {
     $('best-combat').textContent = fmt(best.combat);
   }
 
-  showGameOver({ km, laps, kills, best, isBest, mode }) {
+  showGameOver({ km, laps, kills, best, isBest, mode, ocean }) {
     $('over-km').textContent = Math.floor(km).toLocaleString('en-US');
     $('over-laps').textContent = laps.toFixed(2);
     $('over-kills').textContent = String(kills);
     $('over-best').textContent = Math.floor(best).toLocaleString('en-US');
     $('over-kills-wrap').classList.toggle('hidden', mode !== 'combat');
-    $('over-kicker').textContent = isBest ? 'NEW RECORD · 新紀錄' : 'SIGNAL LOST · 訊號中斷';
-    $('over-main').textContent = isBest ? '刷新最佳航程！' : '墜入大氣層';
+    const place = ocean ? 'SPLASHDOWN · 海上濺落' : 'TOUCHDOWN · 緊急迫降';
+    $('over-kicker').textContent = isBest ? `NEW RECORD · ${place}` : place;
+    $('over-main').textContent = isBest ? '刷新最佳航程！' : '平安回到地球';
     this.els.gameover.classList.toggle('is-best', isBest);
     this.showScreen('gameover');
   }

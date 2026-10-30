@@ -116,7 +116,48 @@ export function createShip(theme) {
   shield.visible = false;
   group.add(shield);
 
+  // 重返大氣層的電漿火光
+  const plasmaMat = shieldMat.clone();
+  plasmaMat.uniforms.uColor.value.set('#ff7a2f');
+  const plasma = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 3), plasmaMat);
+  plasma.scale.set(27, 19, 24);
+  plasma.visible = false;
+  group.add(plasma);
+
+  // 降落傘：橘白相間的傘面＋傘繩，掛在 group 底下，不跟著機身傾斜
+  const canopyGeo = new THREE.SphereGeometry(30, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2).toNonIndexed();
+  canopyGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(canopyGeo.attributes.position.count * 3), 3));
+  const paintChute = (th) => {
+    const pos = canopyGeo.attributes.position, col = canopyGeo.attributes.color;
+    const accent = new THREE.Color(th.accent), white = new THREE.Color('#f4f6fa');
+    for (let f = 0; f < pos.count; f += 3) {
+      const a = Math.atan2(pos.getZ(f) + pos.getZ(f + 1) + pos.getZ(f + 2), pos.getX(f) + pos.getX(f + 1) + pos.getX(f + 2));
+      const c = Math.floor(((a + Math.PI) / (Math.PI * 2)) * 12) % 2 ? accent : white;
+      for (let k = 0; k < 3; k++) col.setXYZ(f + k, c.r, c.g, c.b);
+    }
+    col.needsUpdate = true;
+  };
+  paintChute(theme);
+  const canopy = new THREE.Mesh(canopyGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.8, side: THREE.DoubleSide }));
+  canopy.position.y = 44;
+  canopy.scale.y = 0.62;
+  const rope = [];
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    rope.push(0, 7, 0, Math.cos(a) * 30, 44, Math.sin(a) * 30);
+  }
+  const ropeGeo = new THREE.BufferGeometry();
+  ropeGeo.setAttribute('position', new THREE.Float32BufferAttribute(rope, 3));
+  const ropes = new THREE.LineSegments(ropeGeo, new THREE.LineBasicMaterial({ color: '#dfe6f2', transparent: true, opacity: 0.7 }));
+  const chute = new THREE.Group();
+  chute.add(canopy, ropes);
+  chute.visible = false;
+  group.add(chute);
+  let chuteOpen = false;
+  let chuteK = 0;
+
   const red = new THREE.Color('#ff2a2a');
+  const orange = new THREE.Color('#ff6a1f');
   const black = new THREE.Color(0, 0, 0);
 
   return {
@@ -131,20 +172,31 @@ export function createShip(theme) {
       glassMat.emissive.set(th.glass);
       flameMat.color.set(th.flame);
       shieldMat.uniforms.uColor.value.set(th.shield);
+      paintChute(th);
     },
-    // thrust：尾焰強度；flash：受擊閃紅 0~1；shield：護盾透明度 0~1
-    update(dt, t, { thrust = 1, flash = 0, shield: sh = 0 } = {}) {
+    setChute(open) {
+      chuteOpen = open;
+    },
+    // thrust：尾焰強度；flash：受擊閃紅 0~1；shield：護盾透明度 0~1；plasma：重返大氣層火光 0~1
+    update(dt, t, { thrust = 1, flash = 0, shield: sh = 0, plasma: pl = 0 } = {}) {
       for (const f of flames) {
         const flick = 0.8 + Math.random() * 0.4;
         f.outer.scale.set(9 * f.s * thrust * flick, 2.4 * f.s, 2.4 * f.s);
         f.inner.scale.set(5 * f.s * thrust * flick, 1.2 * f.s, 1.2 * f.s);
       }
       lamp.visible = t % 1.2 < 0.15;
-      hullMat.emissive.copy(black).lerp(red, flash);
-      accentMat.emissive.copy(black).lerp(red, flash * 0.6);
+      hullMat.emissive.copy(black).lerp(red, flash).lerp(orange, pl * 0.7);
+      accentMat.emissive.copy(black).lerp(red, flash * 0.6).lerp(orange, pl * 0.5);
       shield.visible = sh > 0.001;
       shieldMat.uniforms.uAlpha.value = sh;
       shieldMat.uniforms.uTime.value = t;
+      plasma.visible = pl > 0.01;
+      plasmaMat.uniforms.uAlpha.value = pl * 0.9;
+      plasmaMat.uniforms.uTime.value = t;
+      chuteK += ((chuteOpen ? 1 : 0) - chuteK) * Math.min(1, dt * (chuteOpen ? 5 : 9));
+      chute.visible = chuteK > 0.01;
+      chute.scale.setScalar(chuteK);
+      chute.rotation.z = Math.sin(t * 1.5) * 0.06;
     },
   };
 }

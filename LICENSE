@@ -1,0 +1,35 @@
+ORBITER
+Copyright (c) 2026 WEN CHAO CHIN. All rights reserved.
+
+This software, including its source code, game design, visual design, text and
+audio, is the property of WEN CHAO CHIN. No part of it may be copied, modified,
+distributed, published, sublicensed or sold, in whole or in part, without prior
+written permission from the copyright holder.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES
+OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+Third-party components remain under their own licenses:
+
+- three.js: MIT License
+- lil-gui: MIT License
+- Orbitron font: SIL Open Font License 1.1
+
+----------------------------------------------------------------------
+
+ORBITER
+著作權所有 (c) 2026 WEN CHAO CHIN。保留一切權利。
+
+本軟體（包含原始碼、遊戲設計、視覺設計、文字與音訊）為 WEN CHAO CHIN 所有。
+未經著作權人事先書面同意，不得以任何形式重製、修改、散布、公開傳輸、再授權或
+販售本軟體之全部或任何部分。
+
+本軟體依「現狀」提供，不附帶任何明示或默示之擔保。著作權人對於因使用本軟體所
+產生之任何請求、損害或其他責任，概不負責。
+
+第三方元件仍依其各自授權條款使用：
+
+- three.js：MIT License
+- lil-gui：MIT License
+- Orbitron 字型：SIL Open Font License 1.1

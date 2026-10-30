@@ -12,6 +12,8 @@ import { Particles } from './particles.js';
 import { Entities } from './entities.js';
 import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
+import { Comms, COMMS_LINE_IDS } from './comms.js';
+import { buildDescentCurve, descentAt } from './descent.js';
 
 const hasOverrides = loadOverrides({ LAYOUTS, GAME, THEME });
 if (hasOverrides) console.info('[ORBITER] 已套用 DEV 本機暫存數值（DEV 面板可清除）');
@@ -43,10 +45,11 @@ const particles = new Particles(scene);
 const entities = new Entities(scene, particles, THEME);
 const hud = new Hud();
 const sfx = new Sfx();
+const comms = new Comms(sfx, hud);
 
 // ── 狀態 ───────────────────────────────────────────
 const S = {
-  phase: 'title', // title | playing | dying | gameover
+  phase: 'title', // title | playing | landing | gameover
   mode: 'cruise', // cruise 巡航 | combat 戰鬥
   paused: false,
   timeScale: 1,
@@ -64,14 +67,19 @@ const S = {
   invulnT: 0,
   flashT: 0,
   shake: 0,
-  deathT: 0,
+  land: { stage: '', t: 0, alt0: 0, landedT: 0, plasma: 0, thrust: 0, ocean: false, curve: null }, // stage：deorbit | reentry | chute | landed
+  lowWarned: false,
+  critWarned: false,
+  debrisSeen: false,
+  recordHit: false,
   cellT: 1,
   hazardT: 2.5,
   fireT: 0,
   firing: false,
   pending: [],
   trailAcc: 0,
-  ship: { x: 0, alt: 100, tx: 0, ty: 100, vx: 0, vy: 0, kx: 0, ky: 0, spin: 0 },
+  fireAcc: 0,
+  ship: { x: 0, alt: 100, tx: 0, ty: 100, vx: 0, vy: 0, kx: 0, ky: 0 },
   cam: { x: 0, y: 0 },
   view: { halfW: 200, halfH: 130, rightX: 200, leftX: -200 },
   pointer: { active: false, x: 0, y: 0, touch: false },
@@ -170,6 +178,10 @@ canvas.addEventListener('pointermove', (e) => {
 canvas.addEventListener('pointerdown', (e) => {
   sfx.unlock();
   if (devBlocksInput()) return;
+  if (S.phase === 'landing') {
+    skipLanding();
+    return;
+  }
   S.pointer.x = e.clientX;
   S.pointer.y = e.clientY;
   S.pointer.active = true;
@@ -191,6 +203,7 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
   }
   if (k === 'enter' && S.phase === 'gameover') startGame(S.mode);
+  if ((k === ' ' || k === 'enter') && S.phase === 'landing') skipLanding();
 });
 window.addEventListener('keyup', (e) => {
   const k = e.key.toLowerCase();
@@ -221,16 +234,21 @@ soundBtn.addEventListener('click', () => {
 function resetRun(mode) {
   Object.assign(S, {
     mode, omega: GAME.speedStart, travel: 0, level: 1, laps: 0, energy: GAME.energyMax, kills: 0,
-    shieldT: 0, invulnT: 0, flashT: 0, deathT: 0, cellT: 0.8, hazardT: 2.5, fireT: 0, pending: [],
+    shieldT: 0, invulnT: 0, flashT: 0, cellT: 0.8, hazardT: 2.5, fireT: 0, pending: [],
+    lowWarned: false, critWarned: false, debrisSeen: false, recordHit: false,
   });
   entities.clear();
   particles.clear();
+  comms.reset();
+  sfx.stopRoar();
+  ship.setChute(false);
+  ship.model.rotation.set(0, 0, 0);
   const sh = S.ship;
   sh.x = L.ship.x - L.ship.rangeX - S.view.halfW * 0.6; // 從左側飛入
   sh.alt = altMid();
   sh.tx = L.ship.x;
   sh.ty = altMid();
-  sh.kx = sh.ky = sh.spin = 0;
+  sh.kx = sh.ky = 0;
   ship.group.visible = true;
   hud.setMode(mode);
 }
@@ -238,7 +256,9 @@ function resetRun(mode) {
 function startGame(mode) {
   sfx.unlock();
   sfx.start();
+  comms.preload();
   resetRun(mode);
+  comms.schedule(1.4, mode === 'combat' ? 'combat' : 'start');
   S.phase = 'playing';
   S.paused = false;
   S.pointer.active = false;
@@ -257,32 +277,104 @@ function toTitle() {
   S.phase = 'title';
   S.paused = false;
   entities.clear();
+  comms.reset();
+  sfx.stopRoar();
+  ship.setChute(false);
   hud.showPause(false);
   hud.showHud(false);
   hud.hint('', 0);
   hud.setBest(S.best);
   hud.showScreen('title');
   ship.group.visible = true;
-  S.ship.spin = 0;
 }
 
-function die() {
-  S.phase = 'dying';
-  S.deathT = 0;
-  S.ship.vy = Math.min(S.ship.vy, 0) - 20;
-  S.ship.vx = 40;
+// 能量耗盡：休士頓下令中止任務，引導太空船迫降回地球
+function beginLanding() {
+  S.phase = 'landing';
   S.firing = false;
-  sfx.gameOver();
+  S.pending = [];
+  S.land = { stage: 'deorbit', t: 0, alt0: S.ship.alt, landedT: 0, plasma: 0, thrust: 1, ocean: false, curve: buildDescentCurve(GAME.reentryAt, GAME.chuteAt) };
+  S.shieldT = S.invulnT = 0; // 這兩個倒數只在遊戲中更新，不清掉太空船會一直閃
+  entities.fadeOut();
+  comms.event('abort');
+  hud.hint('點擊畫面可略過迫降', 3);
 }
 
-function gameOver() {
-  const sh = S.ship;
+// 太空船正下方的著陸高度（相對 earthTop）
+function groundBelowShip() {
+  const R = L.earth.radius;
+  const dx = S.ship.x - L.earth.x;
+  const s = world.surfaceAt(S.ship.x, L, THEME);
+  const y = Math.sqrt(Math.max(0, (R + s.lift) ** 2 - dx * dx)) - R;
+  return { alt: y + (s.ocean ? 8 : 9) * L.ship.scale, ocean: s.ocean };
+}
+
+function updateLanding(dt) {
+  const sh = S.ship, la = S.land;
+  if (la.stage === 'landed') {
+    la.landedT += dt;
+    if (la.landedT >= GAME.landedDelay) finishLanding();
+    return;
+  }
+  la.t += dt;
+  const u = Math.min(1, la.t / GAME.landingTime);
+  const ground = groundBelowShip();
+
+  la.thrust = Math.max(0, 1 - la.t / 5); // 引擎約 5 秒內逐漸熄滅
+  sh.x += (L.ship.landX - sh.x) * (1 - Math.exp(-0.35 * dt)); // 慢慢滑向著陸點
+  sh.alt = THREE.MathUtils.lerp(la.alt0, ground.alt, descentAt(la.curve, u));
+
+  // 等對話講完才進黑障，不會把飛行員的回覆切斷（最多多等 8%）
+  if (la.stage === 'deorbit' && u >= GAME.reentryAt && (!comms.busy || u >= GAME.reentryAt + 0.08)) {
+    la.stage = 'reentry';
+    comms.setBlackout(true);
+    sfx.reentry((GAME.chuteAt - GAME.reentryAt) * GAME.landingTime);
+  } else if (la.stage === 'reentry' && u >= GAME.chuteAt) {
+    la.stage = 'chute';
+    ship.setChute(true);
+    sfx.chute();
+    comms.setBlackout(false);
+    comms.event('chute');
+  }
+  const p = clamp((u - GAME.reentryAt) / Math.max(0.01, GAME.chuteAt - GAME.reentryAt), 0, 1);
+  la.plasma = la.stage === 'reentry' ? Math.sin(p * Math.PI) : 0;
+  if (la.stage === 'reentry') S.shake = Math.max(S.shake, 1.4 * la.plasma);
+
+  if (u >= 1) touchdown(ground);
+}
+
+function touchdown(ground) {
+  const la = S.land, sh = S.ship;
+  la.stage = 'landed';
+  la.landedT = 0;
+  la.plasma = 0;
+  la.thrust = 0;
+  la.ocean = ground.ocean;
+  S.omega = 0;
+  sh.alt = ground.alt;
+  placeShip();
+  ship.setChute(false);
   const p = ship.group.position;
-  particles.burst(p.x, p.y, 0, { color: THEME.accent, count: 20, speed: 120, size: 3, life: 1.2 });
-  particles.burst(p.x, p.y, 0, { color: '#ffb36b', count: 40, speed: 200, size: 3, life: 0.8, glow: true });
-  sfx.boom();
-  ship.group.visible = false;
-  sh.spin = 0;
+  const y = p.y - 5 * L.ship.scale;
+  const colors = ground.ocean ? ['#ffffff', THEME.shallow] : [THEME.sand, THEME.rock];
+  colors.forEach((color) => particles.burst(p.x, y, 0, { color, count: 22, speed: 110, size: 2.6, life: 1.1 }));
+  sfx.touchdown(ground.ocean);
+  S.shake = 1.5;
+  comms.event(ground.ocean ? 'splashdown' : 'touchdown');
+}
+
+function skipLanding() {
+  const la = S.land;
+  if (la.stage === 'landed' || la.t < 1) return;
+  comms.stop();
+  comms.setBlackout(false);
+  sfx.stopRoar();
+  S.ship.x = L.ship.landX;
+  la.t = GAME.landingTime;
+  touchdown(groundBelowShip());
+}
+
+function finishLanding() {
   S.phase = 'gameover';
   const km = S.travel * KM_PER_RAD;
   const isBest = km > (S.best[S.mode] || 0);
@@ -291,7 +383,7 @@ function gameOver() {
     saveBest();
   }
   hud.showHud(false);
-  hud.showGameOver({ km, laps: S.travel / TAU, kills: S.kills, best: S.best[S.mode], isBest, mode: S.mode });
+  hud.showGameOver({ km, laps: S.travel / TAU, kills: S.kills, best: S.best[S.mode], isBest, mode: S.mode, ocean: S.land.ocean });
 }
 
 function togglePause() {
@@ -311,14 +403,20 @@ function queueMeteor() {
   S.pending.push({ t: GAME.warnTime, alt });
   hud.warn(worldToScreenPct(S.view.rightX, earthTop() + alt).y, GAME.warnTime);
   sfx.warn();
+  comms.event('meteor');
 }
 
 function spawnHazard() {
   const r = Math.random();
   const combat = S.mode === 'combat';
   if (S.level >= GAME.meteorFromLevel && r < GAME.meteorChance) queueMeteor();
-  else if (S.level >= GAME.debrisFromLevel && r < GAME.meteorChance + 0.25) entities.spawnDebris(combat);
-  else entities.spawnAsteroids(S.level, combat, GAME.asteroidHp);
+  else if (S.level >= GAME.debrisFromLevel && r < GAME.meteorChance + 0.25) {
+    entities.spawnDebris(combat);
+    if (!S.debrisSeen) {
+      S.debrisSeen = true;
+      comms.event('debris');
+    }
+  } else entities.spawnAsteroids(S.level, combat, GAME.asteroidHp);
   if (S.shieldT <= 0 && Math.random() < GAME.shieldChance) entities.spawnShield();
 }
 
@@ -342,6 +440,7 @@ function onHit(ev) {
   S.ship.kx = -26;
   S.ship.ky = ev.y > ship.group.position.y ? -14 : 14;
   hud.flash();
+  comms.event('hit');
 }
 
 function handleEvents(events) {
@@ -355,6 +454,7 @@ function handleEvents(events) {
         S.shieldT = GAME.shieldTime;
         sfx.shield();
         hud.banner('護盾啟動', 'SHIELD ON', 1.2);
+        comms.event('shield');
         break;
       case 'hit':
         onHit(ev);
@@ -363,6 +463,7 @@ function handleEvents(events) {
         S.kills += 1;
         sfx.boom();
         if (Math.random() < GAME.dropChance) entities.addCell(ev.angle, ev.radius);
+        if (S.kills % 10 === 0) comms.event('kill');
         break;
       case 'ping':
         sfx.ping();
@@ -382,22 +483,39 @@ function updateProgress(dt) {
     S.energy = Math.min(GAME.energyMax, S.energy + GAME.lapBonus);
     hud.banner(`完成第 ${laps} 圈`, `ORBIT COMPLETE · 能量 +${GAME.lapBonus}`, GAME.bannerTime);
     sfx.lap();
+    comms.event('lap');
   }
   if (lvlUp) {
     S.level = lvl;
     if (!lapUp) {
       hud.banner(`等級 ${String(lvl).padStart(2, '0')}`, 'LEVEL UP · 軌道速度提升', GAME.bannerTime);
       sfx.levelUp();
+      comms.event('level');
     }
+  }
+  const best = S.best[S.mode] || 0;
+  if (!S.recordHit && best > 0 && S.travel * KM_PER_RAD > best) {
+    S.recordHit = true;
+    comms.event('record');
   }
 
   S.energy -= (GAME.energyDrain + (S.level - 1) * GAME.drainPerLevel) * dt;
   if (S.god) S.energy = Math.max(S.energy, GAME.energyMax * 0.5);
   if (S.energy <= 0) {
     S.energy = 0;
-    die();
+    beginLanding();
     return;
   }
+  // 能量警告：回升後才能再次觸發
+  const pct = S.energy / GAME.energyMax;
+  if (pct < 0.25 && !S.lowWarned) {
+    S.lowWarned = true;
+    comms.event('low');
+  } else if (pct > 0.4) S.lowWarned = false;
+  if (pct < 0.1 && !S.critWarned) {
+    S.critWarned = true;
+    comms.event('crit');
+  } else if (pct > 0.18) S.critWarned = false;
 
   S.cellT -= dt;
   if (S.cellT <= 0) {
@@ -448,14 +566,10 @@ function updateShip(dt, t) {
     sh.ty = clamp(sh.ty, L.ship.altMin, L.ship.altMax);
     sh.x += (sh.tx - sh.x) * follow;
     sh.alt += (sh.ty - sh.alt) * follow;
-  } else if (S.phase === 'dying') {
-    // 失去動力：旋轉墜向大氣層
-    S.deathT += dt;
-    sh.vy -= 90 * dt;
-    sh.x += sh.vx * dt;
-    sh.alt += sh.vy * dt;
-    sh.spin += dt * 7;
-    if (sh.alt < -5 || S.deathT > GAME.deathTime) gameOver();
+  } else if (S.phase === 'landing') {
+    updateLanding(dt);
+  } else if (S.phase === 'gameover') {
+    // 已著陸：停在地表
   } else {
     // 標題 / 結算：在 titleX / titleAlt 附近自動巡航
     sh.tx = L.ship.titleX + Math.sin(t * 0.45) * L.ship.rangeX * 0.2;
@@ -464,7 +578,8 @@ function updateShip(dt, t) {
     sh.alt += (sh.ty - sh.alt) * follow * 0.5;
   }
 
-  if (S.phase !== 'dying' && dt > 0) {
+  const grounded = S.phase === 'landing' || S.phase === 'gameover';
+  if (dt > 0) {
     sh.vx = (sh.x - px) / dt;
     sh.vy = (sh.alt - pa) / dt;
   }
@@ -476,9 +591,8 @@ function updateShip(dt, t) {
   // 姿態：爬升抬頭、左右移動翻滾
   const tilt = L.ship.tilt;
   const m = ship.model;
-  if (S.phase === 'dying') {
-    m.rotation.z -= dt * 2.2;
-    m.rotation.x += dt * 9;
+  if (grounded) {
+    poseLanding(dt, t);
   } else {
     m.rotation.z += (clamp(sh.vy * 0.006 * tilt, -0.7, 0.7) - m.rotation.z) * Math.min(1, dt * 8);
     m.rotation.x += (clamp(-sh.vx * 0.004 * tilt, -0.6, 0.6) + Math.sin(t * 1.3) * 0.07 - m.rotation.x) * Math.min(1, dt * 6);
@@ -488,9 +602,22 @@ function updateShip(dt, t) {
   S.flashT = Math.max(0, S.flashT - dt);
   const blink = S.invulnT > 0 && S.shieldT <= 0 ? (Math.sin(t * 40) > 0 ? 0.6 : 0) : 0;
   const shieldAlpha = S.shieldT > 0 ? (S.shieldT < 1.5 ? (Math.sin(t * 20) > 0 ? 1 : 0.3) : 1) : 0;
-  ship.update(dt, t, { thrust: S.phase === 'dying' ? 0.3 : 1 + Math.max(0, sh.vx) * 0.004, flash: Math.max(S.flashT / GAME.flashTime, blink), shield: shieldAlpha });
+  const thrust = grounded ? S.land.thrust : 1 + Math.max(0, sh.vx) * 0.004;
+  ship.update(dt, t, { thrust, flash: Math.max(S.flashT / GAME.flashTime, blink), shield: shieldAlpha, plasma: S.phase === 'landing' ? S.land.plasma : 0 });
 
   emitTrail(dt);
+}
+
+// 迫降姿態：微微低頭滑行 → 以腹部迎向大氣層 → 掛傘擺正 → 貼齊地表，全程緩慢轉動
+function poseLanding(dt, t) {
+  const m = ship.model, la = S.land;
+  const tiltBySurface = -Math.asin(clamp((S.ship.x - L.earth.x) / L.earth.radius, -1, 1));
+  const target = { deorbit: -0.12, reentry: 0.3, chute: Math.sin(t * 1.5) * 0.06 }[la.stage] ?? tiltBySurface;
+  const k = Math.min(1, dt * 1.1);
+  m.rotation.z += (target - m.rotation.z) * k;
+  m.rotation.x -= m.rotation.x * k;
+  if (S.phase === 'gameover' && la.ocean) m.position.y = Math.sin(t * 1.4) * 0.8; // 海面上輕輕起伏
+  else m.position.y = 0;
 }
 
 function placeShip() {
@@ -500,22 +627,28 @@ function placeShip() {
 
 const _np = new THREE.Vector3();
 function emitTrail(dt) {
-  if (!ship.group.visible || dt <= 0) return;
-  S.trailAcc += dt * 60;
+  if (!ship.group.visible || dt <= 0 || S.phase === 'gameover') return;
+  const landing = S.phase === 'landing';
+  const sc = L.ship.scale;
+  const p = ship.group.position;
+  if (landing && S.land.plasma > 0) {
+    // 重返大氣層：火焰往上、往後拖曳
+    S.fireAcc += dt * 80 * S.land.plasma;
+    const fires = Math.floor(S.fireAcc);
+    S.fireAcc -= fires;
+    for (let i = 0; i < fires; i++) {
+      const color = ['#ff7a2f', '#ffd36b', '#ffffff'][Math.floor(Math.random() * 3)];
+      particles.emit(p.x + rand(-14, 18) * sc, p.y + rand(-16, 2) * sc, rand(-10, 10), rand(-70, -10), rand(50, 130), rand(-8, 8), rand(3, 6) * sc, rand(0.3, 0.6), color);
+    }
+  }
+  S.trailAcc += dt * 60 * (landing ? S.land.thrust : 1); // 迫降時尾焰跟著引擎一起淡出
   const n = Math.floor(S.trailAcc);
   S.trailAcc -= n;
-  const dying = S.phase === 'dying';
   for (let i = 0; i < n; i++) {
     ship.nozzles.forEach((nz, idx) => {
-      if (dying && idx > 0) return;
       nz.getWorldPosition(_np);
       const back = -70 - S.omega * L.earth.radius * 0.6;
-      if (dying) {
-        particles.emit(_np.x, _np.y, _np.z, back * 0.4 + rand(-15, 15), rand(-10, 25), rand(-10, 10), rand(3, 6), rand(0.4, 0.8), Math.random() < 0.5 ? '#ff7a2f' : '#ffd36b');
-        if (Math.random() < 0.3) particles.emit(_np.x, _np.y, _np.z, back * 0.3, rand(5, 25), 0, rand(1.5, 3), 1.2, '#3a3d48', false, 1);
-      } else {
-        particles.emit(_np.x, _np.y + rand(-0.6, 0.6), _np.z, back + rand(-10, 10), rand(-6, 6), rand(-6, 6), (idx ? 1.3 : 2) * L.ship.scale, rand(0.22, 0.34), THEME.flame);
-      }
+      particles.emit(_np.x, _np.y + rand(-0.6, 0.6), _np.z, back + rand(-10, 10), rand(-6, 6), rand(-6, 6), (idx ? 1.3 : 2) * sc, rand(0.22, 0.34), THEME.flame);
     });
   }
 }
@@ -538,8 +671,11 @@ function update(dt, t) {
   const playing = S.phase === 'playing';
   let targetOmega = GAME.speedStart * 0.5;
   if (playing) targetOmega = Math.min(GAME.speedMax, GAME.speedStart + (S.level - 1) * GAME.speedPerLevel);
-  else if (S.phase === 'dying') targetOmega = GAME.speedStart * 0.3;
-  S.omega += (targetOmega - S.omega) * Math.min(1, dt * 1.5);
+  // 迫降時地球慢慢減速，開傘後才停下，太空船落地才不會滑行
+  const landing = S.phase === 'landing';
+  const stopping = S.phase === 'gameover' || (landing && (S.land.stage === 'chute' || S.land.stage === 'landed'));
+  if (stopping) targetOmega = 0;
+  S.omega += (targetOmega - S.omega) * Math.min(1, dt * (stopping ? 1.2 : landing ? 0.25 : 1.5));
   S.rot += S.omega * dt;
   entities.holder.rotation.z = S.rot;
   world.update(dt, S.omega);
@@ -564,7 +700,11 @@ function update(dt, t) {
   hud.setStats({ km: S.travel * KM_PER_RAD, laps: S.travel / TAU, level: S.level, kills: S.kills });
   hud.setEnergy(S.energy, GAME.energyMax);
   hud.setShield(S.shieldT);
-  sfx.engine(S.phase === 'playing' && !S.paused ? 1 : 0.35, (S.omega - GAME.speedStart * 0.5) / (GAME.speedMax - GAME.speedStart * 0.5));
+  // 迫降時飛行聲跟著引擎慢慢淡出，留一點餘韻直到落地
+  const landingLevel = S.land.stage === 'landed' ? 0 : Math.max(0.15, S.land.thrust);
+  const engineLevel = { playing: 1, title: 0.35, landing: landingLevel, gameover: 0 }[S.phase];
+  sfx.engine(S.paused ? 0.35 : engineLevel, Math.max(0, (S.omega - GAME.speedStart * 0.5) / (GAME.speedMax - GAME.speedStart * 0.5)));
+  comms.update(dt, playing);
 }
 
 // ── DEV 微調工具（按 D 開啟，第一次才載入）────────────────
@@ -634,12 +774,31 @@ const devApi = {
     shieldItem: () => entities.spawnShield(),
     fillEnergy: () => (S.energy = GAME.energyMax),
     lowEnergy: () => (S.energy = GAME.energyMax * 0.15),
-    die: () => S.phase === 'playing' && die(),
+    landing: () => {
+      if (S.phase !== 'playing') startGame(S.mode);
+      beginLanding();
+    },
     gameOver: () => {
-      if (S.phase !== 'playing' && S.phase !== 'dying') resetRun(S.mode);
-      gameOver();
+      if (S.phase === 'title') resetRun(S.mode);
+      if (S.phase !== 'landing') {
+        S.phase = 'landing';
+        S.land = { stage: 'chute', t: GAME.landingTime, alt0: S.ship.alt, landedT: 0, plasma: 0, thrust: 0, ocean: false, curve: null };
+      }
+      S.ship.x = L.ship.landX;
+      touchdown(groundBelowShip());
+      finishLanding();
+    },
+    commsPlay: (id) => {
+      sfx.unlock();
+      comms.stop();
+      comms.play(id);
+    },
+    commsEvent: (name) => {
+      sfx.unlock();
+      comms.event(name);
     },
   },
+  commsLineIds: COMMS_LINE_IDS,
 };
 
 if (new URLSearchParams(location.search).has('dev')) {

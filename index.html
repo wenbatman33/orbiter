@@ -55,6 +55,15 @@
       </div>
     </div>
 
+    <!-- 地面通訊字幕 -->
+    <div class="hud-el" id="hud-comms" data-key="comms">
+      <div class="fade comms-inner">
+        <div class="comms-head"><span class="comms-dot"></span><span id="comms-who">HOUSTON 休士頓</span></div>
+        <div class="comms-zh" id="comms-zh">通訊字幕</div>
+        <div class="comms-en" id="comms-en">Radio subtitle</div>
+      </div>
+    </div>
+
     <!-- 標題畫面 -->
     <div class="screen hud-el" id="screen-title" data-key="title">
       <div class="title-kicker">LOW EARTH ORBIT</div>
@@ -73,12 +82,13 @@
         </button>
       </div>
       <div class="title-help">滑鼠 / 手指 / 方向鍵 控制太空船 · 戰鬥模式按住滑鼠或空白鍵射擊 · P 暫停</div>
+      <div class="title-copy">© 2026 WEN CHAO CHIN. All rights reserved.</div>
     </div>
 
     <!-- 結算畫面 -->
     <div class="screen hud-el hidden" id="screen-over" data-key="gameover">
-      <div class="over-kicker" id="over-kicker">SIGNAL LOST · 訊號中斷</div>
-      <h2 class="over-main" id="over-main">墜入大氣層</h2>
+      <div class="over-kicker" id="over-kicker">TOUCHDOWN · 緊急迫降</div>
+      <h2 class="over-main" id="over-main">平安回到地球</h2>
       <div class="over-stats">
         <div class="over-stat"><div class="v" id="over-km">0</div><div class="l">KM 航程</div></div>
         <div class="over-stat"><div class="v" id="over-laps">0.00</div><div class="l">繞行圈數</div></div>

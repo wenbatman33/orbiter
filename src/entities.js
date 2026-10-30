@@ -221,7 +221,14 @@ export class Entities {
       e.mesh.rotation.z += e.spin.z * dt;
       e.bump = Math.max(0, e.bump - dt * 6);
       const pulse = e.type === 'cell' || e.type === 'shield' ? 1 + Math.sin(e.t * 6) * 0.08 : 1;
-      e.mesh.scale.setScalar(e.size * pulse * (1 + e.bump * 0.35));
+      if (e.fading !== undefined) {
+        e.fading -= dt * 1.6;
+        if (e.fading <= 0) {
+          this._remove(e);
+          continue;
+        }
+      }
+      e.mesh.scale.setScalar(e.size * pulse * (1 + e.bump * 0.35) * (e.fading ?? 1));
 
       const wa = e.angle + c.rot;
       e.wx = c.ex + Math.cos(wa) * e.radius;
@@ -278,6 +285,11 @@ export class Entities {
     this.bullets = this.bullets.filter((b) => b.alive);
     this.list = this.list.filter((e) => e.alive);
     return events;
+  }
+
+  // 迫降時讓軌道上的物件淡出，地球停轉後不會停在半空中
+  fadeOut() {
+    for (const e of this.list) e.fading = 1;
   }
 
   clear() {

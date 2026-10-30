@@ -7,10 +7,10 @@ import { saveOverrides, clearOverrides } from './overrides.js';
 const LABELS = {
   ui: '🔠 UI 縮放基準', refW: '基準寬 px', refH: '基準高 px', min: '最小縮放', max: '最大縮放',
   camera: '📷 相機', earth: '🌍 地球', ship: '🚀 太空船', sun: '☀️ 太陽', moon: '🌙 月球', space: '🌌 太空', fx: '✨ 後製特效', hud: '🖥 HUD',
-  stats: '數值列 stats', energy: '能量條 energy', controls: '按鈕 controls', hint: '提示 hint', banner: '橫幅 banner', title: '標題畫面 title', gameover: '結算畫面 gameover',
+  stats: '數值列 stats', energy: '能量條 energy', controls: '按鈕 controls', hint: '提示 hint', banner: '橫幅 banner', title: '標題畫面 title', gameover: '結算畫面 gameover', comms: '通訊字幕 comms',
   fov: '視角 FOV', lookX: '注視點 X', lookY: '注視點 Y', follow: '跟隨太空船比例',
   radius: '半徑', cloudAlt: '雲層高度', atmoScale: '大氣層厚度', atmoIntensity: '大氣光暈強度', hazeIntensity: '地表薄霧強度',
-  altMin: '最低高度', altMax: '最高高度', rangeX: '左右活動範圍', scale: '縮放', tilt: '傾斜幅度', touchOffsetY: '觸控上移 px', titleX: '標題畫面 X', titleAlt: '標題畫面高度',
+  altMin: '最低高度', altMax: '最高高度', rangeX: '左右活動範圍', scale: '縮放', tilt: '傾斜幅度', touchOffsetY: '觸控上移 px', titleX: '標題畫面 X', titleAlt: '標題畫面高度', landX: '迫降著陸點 X',
   size: '光暈大小', intensity: '光照強度', starSize: '星星大小', starOpacity: '星星亮度', nebulaOpacity: '星雲濃度', ambient: '環境光',
   bloomStrength: '泛光強度', bloomRadius: '泛光半徑', bloomThreshold: '泛光門檻', exposure: '曝光',
   ax: '錨點 X (0 左 / 1 右)', ay: '錨點 Y (0 上 / 1 下)', fontSize: '字級 px', color: '顏色', opacity: '透明度',
@@ -19,8 +19,11 @@ const LABELS = {
   cellEvery: '晶體串間隔 s', hazardEvery: '障礙間隔 s', hazardRamp: '障礙間隔遞減率', hazardMin: '障礙最短間隔', combatHazardMul: '戰鬥模式障礙倍率',
   debrisFromLevel: '太空垃圾出現等級', meteorFromLevel: '流星出現等級', meteorChance: '流星機率', shieldChance: '護盾機率', shieldTime: '護盾秒數',
   fireRate: '射擊間隔 s', bulletSpeed: '雷射速度', asteroidHp: '隕石耐久', dropChance: '擊碎掉落晶體機率',
-  shipFollow: '操控跟手度', invulnTime: '受擊無敵秒數', bannerTime: '橫幅停留 s', hintTime: '提示停留 s', deathTime: '墜落動畫 s',
+  shipFollow: '操控跟手度', invulnTime: '受擊無敵秒數', bannerTime: '橫幅停留 s', hintTime: '提示停留 s',
   flashTime: '受擊閃紅 s', shake: '鏡頭震動', warnTime: '流星預警 s',
+  landingTime: '迫降總時間 s', reentryAt: '重返大氣層時間點（比例）', chuteAt: '開傘時間點（比例）', landedDelay: '著陸後到結算 s',
+  commsVolume: '通訊音量', commsGap: '對答間隔 s', commsRest: '對話後休息 s', commsIdleMin: '閒聊最短間隔 s', commsIdleMax: '閒聊最長間隔 s',
+  radioLow: '無線電高通 Hz', radioHigh: '無線電低通 Hz', radioDrive: '無線電失真', radioNoise: '靜電雜訊', quindarVolume: '提示音音量',
   bgColor: '背景色', ambientColor: '環境光色', sunColor: '陽光色', atmoColor: '大氣色', moonColor: '月球色',
   earthSeed: '地形種子', seaLevel: '海平面', deepOcean: '深海', ocean: '海洋', shallow: '淺海', sand: '沙灘', grass: '草原', forest: '森林', rock: '岩地', snow: '冰雪', cloud: '雲',
   hull: '機身', accent: '機翼 / 色帶', glass: '座艙', flame: '尾焰', cell: '能量晶體', asteroid: '隕石', debris: '太空垃圾', panel: '太陽能板',
@@ -35,7 +38,7 @@ const RANGES = {
   'earth.x': [-1500, 1500, 1], 'earth.y': [-3000, 300, 1], 'earth.radius': [150, 3000, 1], 'earth.cloudAlt': [0, 80, 0.5],
   'earth.atmoScale': [1.01, 1.5, 0.005], 'earth.atmoIntensity': [0, 4, 0.05], 'earth.hazeIntensity': [0, 3, 0.05],
   'ship.x': [-600, 600, 1], 'ship.altMin': [0, 500, 1], 'ship.altMax': [0, 900, 1], 'ship.rangeX': [0, 500, 1],
-  'ship.scale': [0.2, 4, 0.01], 'ship.tilt': [0, 3, 0.05], 'ship.touchOffsetY': [0, 250, 1], 'ship.titleX': [-600, 600, 1], 'ship.titleAlt': [0, 900, 1],
+  'ship.scale': [0.2, 4, 0.01], 'ship.tilt': [0, 3, 0.05], 'ship.touchOffsetY': [0, 250, 1], 'ship.titleX': [-600, 600, 1], 'ship.titleAlt': [0, 900, 1], 'ship.landX': [-600, 600, 1],
   'sun.x': [-5000, 5000, 1], 'sun.y': [-3000, 5000, 1], 'sun.z': [-6000, 500, 1], 'sun.size': [0, 3000, 1], 'sun.intensity': [0, 8, 0.05],
   'moon.x': [-5000, 5000, 1], 'moon.y': [-3000, 5000, 1], 'moon.z': [-6000, 500, 1], 'moon.radius': [5, 500, 1],
   'space.starSize': [0.2, 6, 0.1], 'space.starOpacity': [0, 1, 0.01], 'space.nebulaOpacity': [0, 2, 0.01], 'space.ambient': [0, 3, 0.01],
@@ -44,6 +47,9 @@ const RANGES = {
   earthSeed: [0, 50, 1], seaLevel: [0.4, 0.65, 0.005],
   debrisFromLevel: [1, 20, 1], meteorFromLevel: [1, 20, 1], asteroidHp: [1, 10, 1], hazardRamp: [0.6, 1, 0.01],
   meteorChance: [0, 1, 0.01], shieldChance: [0, 1, 0.01], dropChance: [0, 1, 0.01], combatHazardMul: [0.2, 2, 0.01],
+  landingTime: [4, 30, 0.5], reentryAt: [0, 1, 0.01], chuteAt: [0, 1, 0.01], landedDelay: [0, 6, 0.1],
+  commsVolume: [0, 1, 0.005], commsGap: [0, 3, 0.05], commsRest: [0, 20, 0.5], commsIdleMin: [5, 120, 1], commsIdleMax: [5, 180, 1],
+  radioLow: [100, 1000, 10], radioHigh: [1000, 8000, 50], radioDrive: [0, 20, 0.1], radioNoise: [0, 0.5, 0.005], quindarVolume: [0, 0.2, 0.002],
 };
 
 function rangeFor(path, key, val) {
@@ -142,10 +148,17 @@ export function createDevTools(api) {
     '▶ 開始巡航模式': T.cruise, '▶ 開始戰鬥模式': T.combat, '🏠 回標題畫面': T.title,
     '⬆ 升級（LEVEL UP）': T.levelUp, '🌍 完成一圈': T.lap, '💥 受擊': T.hit, '🛡 啟動護盾': T.shield,
     '💎 生成能量晶體串': T.cells, '🪨 生成隕石群': T.asteroids, '🛰 生成太空垃圾': T.debris, '☄️ 生成流星（含預警）': T.meteor, '🟢 生成護盾道具': T.shieldItem,
-    '🔋 能量全滿': T.fillEnergy, '🪫 能量剩 15%': T.lowEnergy, '🔥 墜毀動畫': T.die, '🏁 直接結算畫面': T.gameOver,
+    '🔋 能量全滿': T.fillEnergy, '🪫 能量剩 15%': T.lowEnergy, '🪂 緊急迫降': T.landing, '🏁 直接結算畫面': T.gameOver,
   };
   for (const name of Object.keys(trig)) fTrig.add(trig, name);
   fTrig.close();
+
+  // ── 地面通訊 ──
+  const fComms = gui.addFolder('📻 地面通訊');
+  const commsCtrl = { line: api.commsLineIds[0], '▶ 播放這句（含回覆）': () => T.commsPlay(commsCtrl.line) };
+  fComms.add(commsCtrl, 'line', api.commsLineIds).name('台詞');
+  fComms.add(commsCtrl, '▶ 播放這句（含回覆）');
+  fComms.close();
 
   // ── 版面（依編輯中的裝置重建）──
   let fLayout = null;

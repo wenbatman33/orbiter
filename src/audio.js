@@ -47,6 +47,101 @@ export class Sfx {
     this.engFilter.connect(this.engGain).connect(this.master);
   }
 
+  // 無線電鏈路：語音 → 高通 → 低通 → 中頻峰值 → 削波 → 輸出，並混入靜電雜訊
+  _radio() {
+    if (this.rf) return this.rf;
+    const c = this.ctx;
+    const hp = c.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.Q.value = 0.7;
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.Q.value = 0.7;
+    const peak = c.createBiquadFilter();
+    peak.type = 'peaking';
+    peak.frequency.value = 1700;
+    peak.Q.value = 1;
+    peak.gain.value = 6;
+    const shaper = c.createWaveShaper();
+    const out = c.createGain();
+    hp.connect(lp).connect(peak).connect(shaper).connect(out).connect(this.master);
+
+    const noise = c.createBufferSource();
+    noise.buffer = this.noiseBuf;
+    noise.loop = true;
+    const noiseFilter = c.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 1800;
+    noiseFilter.Q.value = 0.6;
+    const noiseGain = c.createGain();
+    noiseGain.gain.value = 0;
+    noise.connect(noiseFilter).connect(noiseGain).connect(out);
+    noise.start();
+
+    this.rf = { hp, lp, shaper, out, noiseGain, drive: null };
+    return this.rf;
+  }
+
+  setRadio({ low, high, drive, volume }) {
+    if (!this.ctx) return;
+    const rf = this._radio();
+    rf.hp.frequency.value = low;
+    rf.lp.frequency.value = high;
+    rf.out.gain.value = volume;
+    if (rf.drive === drive) return;
+    rf.drive = drive;
+    const curve = new Float32Array(1024);
+    const k = 1 + drive;
+    for (let i = 0; i < curve.length; i++) {
+      const x = (i / (curve.length - 1)) * 2 - 1;
+      curve[i] = Math.tanh(x * k) / Math.tanh(k);
+    }
+    rf.shaper.curve = curve;
+  }
+
+  playRadio(buffer, onEnded) {
+    const src = this.ctx.createBufferSource();
+    const gain = this.ctx.createGain();
+    src.buffer = buffer;
+    src.connect(gain).connect(this._radio().hp);
+    src.onended = onEnded;
+    src.start();
+    return { src, gain };
+  }
+
+  // 中斷語音時快速淡出，避免爆音
+  stopRadio({ src, gain }) {
+    const t = this.ctx.currentTime;
+    gain.gain.setValueAtTime(gain.gain.value, t);
+    gain.gain.linearRampToValueAtTime(0, t + 0.12);
+    try {
+      src.stop(t + 0.14);
+    } catch {
+      // 已經播完
+    }
+  }
+
+  radioStatic(level) {
+    if (!this.ctx) return;
+    this._radio().noiseGain.gain.setTargetAtTime(level, this.ctx.currentTime, 0.04);
+  }
+
+  // Quindar 提示音：Apollo 時代地面發話前後的短音（2525 / 2475 Hz）
+  quindar(freq, vol) {
+    if (!this.ctx || vol <= 0) return;
+    const c = this.ctx, t = c.currentTime, dur = 0.25;
+    const o = c.createOscillator(), g = c.createGain();
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.005);
+    g.gain.setValueAtTime(vol, t + dur - 0.005);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    o.connect(g).connect(this.master);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  }
+
+
   // level：音量 0~1；pitch：速度 0~1
   engine(level, pitch) {
     if (!this.ctx) return;
@@ -133,9 +228,53 @@ export class Sfx {
     this._noise({ dur: 0.8, vol: 0.25, freq: 300, f1: 3000, type: 'bandpass', q: 2 });
   }
 
-  gameOver() {
-    this._tone({ f0: 440, f1: 55, dur: 1.4, type: 'sawtooth', vol: 0.1 });
-    this._noise({ dur: 1.6, vol: 0.2, freq: 2400, f1: 200 });
+  // 重返大氣層的低頻風切聲（持續 dur 秒，可用 stopRoar 提早結束）
+  reentry(dur) {
+    if (!this.ctx) return;
+    this.stopRoar();
+    const c = this.ctx, t = c.currentTime;
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    src.buffer = this.noiseBuf;
+    src.loop = true;
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(260, t);
+    f.frequency.linearRampToValueAtTime(1300, t + dur * 0.6);
+    f.frequency.linearRampToValueAtTime(420, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.13, t + dur * 0.4);
+    g.gain.setValueAtTime(0.13, t + dur * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f).connect(g).connect(this.master);
+    src.start(t);
+    src.stop(t + dur + 0.05);
+    src.onended = () => {
+      if (this.roar === src) this.roar = null;
+    };
+    this.roar = src;
+  }
+
+  stopRoar() {
+    if (!this.roar) return;
+    try {
+      this.roar.stop();
+    } catch {
+      // 已經停止
+    }
+    this.roar = null;
+  }
+
+  chute() {
+    this._noise({ dur: 0.5, vol: 0.11, freq: 500, f1: 2000, type: 'bandpass', q: 1 });
+    this._tone({ f0: 180, f1: 90, dur: 0.25, type: 'triangle', vol: 0.05 });
+  }
+
+  touchdown(ocean) {
+    if (ocean) {
+      this._noise({ dur: 1.5, vol: 0.14, freq: 2400, f1: 380 });
+    } else {
+      this._noise({ dur: 0.55, vol: 0.13, freq: 900, f1: 120 });
+      this._tone({ f0: 110, f1: 38, dur: 0.4, vol: 0.1 });
+    }
   }
 
   click() {
