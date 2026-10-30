@@ -1,0 +1,9 @@
+{
+  // Cloudflare Workers 靜態網站設定：專案根目錄直接當靜態檔上傳，不需建置
+  // name 必須和 Cloudflare 後台的 Worker 名稱一致
+  "name": "orbiter",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "."
+  }
+}

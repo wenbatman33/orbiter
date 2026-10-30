@@ -1,0 +1,12 @@
+# 不上傳到 Cloudflare 的檔案（語法同 .gitignore）
+.git
+.gitignore
+.assetsignore
+.claude
+.wrangler
+.DS_Store
+node_modules
+server.mjs
+wrangler.jsonc
+README.md
+src/layout.backup.js

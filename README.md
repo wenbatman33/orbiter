@@ -12,6 +12,11 @@ node server.mjs
 開啟 http://localhost:5178/ （需要 Node 18 以上，不需安裝套件）。
 任何靜態伺服器也能執行，只有 DEV 工具的「寫入 src/layout.js」需要 `server.mjs`。
 
+## 部署（Cloudflare Workers）
+
+Cloudflare 後台連結此 repo，組建命令留空、部署命令 `npx wrangler deploy`。
+設定在 `wrangler.jsonc`（根目錄當靜態網站上傳），`.assetsignore` 列出不公開的檔案。
+
 ## 玩法
 
 - **巡航模式**：閃避障礙、收集能量

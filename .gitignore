@@ -2,3 +2,4 @@
 node_modules/
 .claude/
 src/layout.backup.js
+.wrangler/
